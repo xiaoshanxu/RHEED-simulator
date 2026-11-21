@@ -77,10 +77,10 @@ footer{color:var(--muted);font-size:.8rem;margin:14px 2px 0}
 <script>
 (function(){
 var ME=9.1e-31, HB=1.05e-34, EV=1.6e-19, PI=Math.PI;
-var P={E:20,th:2,az:0,a:3.905,b:3.905,gam:90,N:8,S:0.095,D:0.055,Np:439,dinv:0.25,scale:true};
+var P={E:20,th:2,az:0,a:3.905,b:3.905,gam:90,Na:2,Nb:8,S:0.095,D:0.055,Np:439,dinv:0.25,scale:true};
 var SL=[['E','Beam energy (keV)',5,50,0.5],['th','Incidence angle (°)',0.2,8,0.1],
         ['az','Azimuth (°)',0,360,1],['a','Lattice constant a (Å)',2,8,0.01],['b','Lattice constant b (Å)',2,8,0.01],
-        ['gam','Angle γ between a and b (°)',30,150,0.5],['N','Max rod order',1,12,1]];
+        ['gam','Angle γ between a and b (°)',30,150,0.5],['Na','Max rod order along a',0,6,1],['Nb','Max rod order along b',0,20,1]];
 var V={yaw:-0.6,pitch:0.45}, M=null;
 var $=function(id){return document.getElementById(id)};
 var c2=$('c2'), c3=$('c3');
@@ -125,8 +125,8 @@ function compute(){
   var A=[2*PI*a2y/det,-2*PI*a2x/det], B=[0,2*PI*P.a/det];
   var rot=function(v){return [v[0]*c+v[1]*s,-v[0]*s+v[1]*c]};
   A=rot(A);B=rot(B);
-  var kx0=kin*Math.cos(th0), z0=-kin*Math.sin(th0), sd=1.5*kin, rods=[], N=P.N;
-  for(var na=-N;na<=N;na++)for(var nb=-N;nb<=N;nb++){
+  var kx0=kin*Math.cos(th0), z0=-kin*Math.sin(th0), sd=1.5*kin, rods=[];
+  for(var na=-P.Na;na<=P.Na;na++)for(var nb=-P.Nb;nb<=P.Nb;nb++){
     var kx=na*A[0]+nb*B[0]+kx0, ky=na*A[1]+nb*B[1], kp2=kx*kx+ky*ky;
     if(kp2>=kin*kin||kx<=0)continue;
     var kz=Math.sqrt(kin*kin-kp2);
@@ -152,7 +152,7 @@ function css(n){return getComputedStyle(document.documentElement).getPropertyVal
 function draw2(m){
   var f=fit(c2), W=f[0], H=f[1], g=f[2];
   g.fillStyle='#04100a';g.fillRect(0,0,W,H);
-  var mg=24, oy=H-(P.scale?46:mg), s=Math.min((W-2*mg)/(2*m.hy),(oy-mg)/m.hz), ox=W/2;
+  var mg=24, mt=P.scale?40:mg, oy=H-(P.scale?46:mg), s=Math.min((W-2*mg)/(2*m.hy),(oy-mt)/m.hz), ox=W/2;
   g.strokeStyle='rgba(120,200,140,.35)';g.beginPath();g.moveTo(0,oy);g.lineTo(W,oy);g.stroke();
   var base=Math.max(4,Math.min(W,H)/60);
   m.rods.forEach(function(r){
@@ -166,19 +166,25 @@ function draw2(m){
     // x position of a tick: y_k = (u*2π/k)*sd, where u = 1/d = k_par/2π (Å⁻¹); pixels = (y_k/sd)*(S/D)*Np
     var kin=m.kin, halfu=(m.hy/m.sd)*kin/(2*PI), st=P.dinv;
     var pxu=(2*PI/kin)*(P.S/P.D)*P.Np, n=Math.min(200,Math.floor(halfu/st));
-    var every=Math.max(1,Math.ceil(46/((st*2*PI/kin)*m.sd*s)));
-    g.font='11px system-ui,sans-serif';g.textAlign='center';
+    var gap=(st*2*PI/kin)*m.sd*s, fs=11, big=Math.max(1,n)*st;   // gap = canvas pixels between neighbouring ticks
+    var lab=function(v){return (Math.round(v*100)/100)+'/Å';};
+    g.textAlign='center';g.font=fs+'px system-ui,sans-serif';
+    var wid=function(){return Math.max(g.measureText('-'+lab(big)).width,g.measureText('-'+Math.round(big*pxu)+' px').width)+4;};
+    var tw=wid();
+    if(tw>gap){fs=Math.max(8,Math.floor(fs*gap/tw));g.font=fs+'px system-ui,sans-serif';tw=wid();}   // shrink labels first
+    var every=Math.max(1,Math.ceil(tw/gap));   // then skip labels only if they still collide
     for(var i=-n;i<=n;i++){
       var u=i*st, x=ox+(u*2*PI/kin)*m.sd*s;
       g.strokeStyle=i?'rgba(120,200,140,.18)':'rgba(120,200,140,.4)';
-      g.beginPath();g.moveTo(x,mg);g.lineTo(x,oy+6);g.stroke();
+      g.beginPath();g.moveTo(x,mt);g.lineTo(x,oy+6);g.stroke();
       if(i%every===0){
-        g.fillStyle='rgba(180,230,190,.85)';g.fillText((Math.round(u*100)/100)+'/Å',x,oy+20);
+        g.fillStyle='rgba(180,230,190,.85)';g.fillText(lab(u),x,oy+20);
         g.fillStyle='rgba(150,200,160,.7)';g.fillText(Math.round(u*pxu)+' px',x,oy+34);
       }
     }
-    g.textAlign='left';g.fillStyle='rgba(150,200,160,.7)';
-    g.fillText('ticks: 1/d (Å⁻¹) and pixels from the pattern centre',8,14);
+    g.textAlign='left';g.font='11px system-ui,sans-serif';g.fillStyle='rgba(150,200,160,.8)';
+    g.fillText('tick spacing: '+(Math.round(st*1000)/1000)+'/Å (1/d)',8,14);
+    g.fillText('labels: 1/d and pixels from the pattern centre',8,28);
   }
   g.fillStyle='rgba(180,230,190,.6)';g.font='11px system-ui,sans-serif';g.textAlign='left';
   g.fillText('shadow edge',8,oy-5);

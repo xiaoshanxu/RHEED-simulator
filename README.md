@@ -24,7 +24,8 @@ Both views update as you move the sliders.
 | Azimuth | Rotation of the lattice about the surface normal, in degrees |
 | a, b | Real-space lattice constants, in Å |
 | γ | Angle between a and b, in degrees |
-| Max rod order | Largest index of the reciprocal-lattice rods included |
+| Max rod order along a | Largest index n_a of the reciprocal-lattice rods included (0 keeps only n_a = 0); a is along the beam at azimuth 0, so n_a sets the Laue zones |
+| Max rod order along b | Largest index n_b included (0 keeps only n_b = 0); more n_b gives more spots across the screen |
 | Lattice preset | Square (b = a, γ = 90°) or hexagonal (b = a, γ = 120°) |
 | Sample–screen distance | Distance from the sample to the phosphor screen, in m |
 | Screen diameter | Diameter of the screen, in m |
