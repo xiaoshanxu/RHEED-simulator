@@ -10,7 +10,7 @@ It runs entirely in your browser (desktop or phone), with no installation, no se
 
 The simulator builds the kinematic Ewald construction for a 2D surface lattice and shows the result in two linked views:
 
-- **Screen pattern:** the diffraction spots on a flat phosphor screen, with the specular (0,0) spot highlighted and the shadow edge marked.
+- **Screen pattern:** the diffraction spots on a flat phosphor screen, with the specular (0,0) spot highlighted and the shadow edge marked. Optional ticks show 1/d (Å⁻¹) and the pixel offset from the centre of the pattern, using the sample–screen distance and screen size you enter.
 - **3D Ewald construction:** the Ewald sphere, reciprocal-lattice rods, rod/sphere intersections, diffracted beams, incident beam and screen plane. Drag to rotate.
 
 Both views update as you move the sliders.
@@ -26,6 +26,11 @@ Both views update as you move the sliders.
 | γ | Angle between a and b, in degrees |
 | Max rod order | Largest index of the reciprocal-lattice rods included |
 | Lattice preset | Square (b = a, γ = 90°) or hexagonal (b = a, γ = 120°) |
+| Sample–screen distance | Distance from the sample to the phosphor screen, in m |
+| Screen diameter | Diameter of the screen, in m |
+| Screen diameter (pixels) | Diameter of the screen image, in pixels |
+| Tick spacing | Spacing of the scale ticks in 1/d (Å⁻¹), default 0.25 |
+| Screen scale | Show or hide the 1/d and pixel ticks on the screen pattern |
 
 At azimuth 0, the real-space vector **a** lies along the beam, and **b** is at angle γ from **a**.
 
@@ -41,6 +46,7 @@ This is a kinematic, qualitative tool.
 - There are no Kikuchi lines, no inner-potential refraction and no dynamical effects, so spot intensities are only indicative.
 - The wavelength is non-relativistic, which changes k by roughly 1% at 20 keV.
 - The screen is flat and perpendicular to the in-plane beam direction.
+- The scale ticks use the small-angle relation (kx ≈ k) and measure pixels from the centre of the pattern (y = 0).
 
 ## Run locally
 

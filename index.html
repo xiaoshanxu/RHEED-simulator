@@ -20,6 +20,7 @@ h1{font-size:1.3rem;margin:0 0 4px}
 .row output{color:var(--fg);font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--accent)}
 select,button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px}
+input[type=number]{width:100%;box-sizing:border-box;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px}
 #info{margin:10px 0 0;font-size:.85rem;color:var(--muted)}
 .views{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
 .views h2{font-size:.95rem;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
@@ -56,13 +57,14 @@ footer{color:var(--muted);font-size:.8rem;margin:14px 2px 0}
 <li>The left view is the pattern on a flat phosphor screen (horizontal axis y, vertical axis z). The brightest yellow spot is the specular (0,0) rod, and the horizontal line at the bottom is the shadow edge.</li>
 <li>The right view shows the Ewald construction in three dimensions: x is the in-plane direction of the beam, y is in-plane and perpendicular to it, and z is the surface normal. Drag to rotate.</li>
 <li>At azimuth 0 the real-space vector a lies along the beam, and b is at angle γ from a. The azimuth rotates the lattice about the surface normal.</li>
+<li>To calibrate the screen scale, enter the sample–screen distance, the screen diameter (both in metres) and the screen diameter in pixels. The ticks on the screen pattern then show 1/d (Å⁻¹) and the pixel offset from the centre of the pattern; the tick spacing (default 0.25 Å⁻¹) is adjustable, and unticking the scale box hides them.</li>
 </ul>
 </details>
 <details><summary>Model</summary>
-<p>The incident wavevector has magnitude k = √(2mE)/ħ and makes the angle θ₀ with the surface. The surface lattice gives reciprocal-lattice rods perpendicular to the surface, at in-plane positions G = n₁a* + n₂b*. Elastic scattering requires the outgoing wavevector to lie on the Ewald sphere of radius k, so every rod that cuts the sphere gives one diffracted beam. The beam direction (kx, ky, kz) is projected onto the screen plane x = 1.5 k, giving the spot position (y, z) = (1.5 k·ky/kx, 1.5 k·kz/kx). The screen distance only rescales the pattern. Spot size follows sin(θ₀)/sin(Θ/2), where Θ is the angle between the incident and diffracted beams; this is a qualitative weighting, not a calculated intensity.</p>
+<p>The incident wavevector has magnitude k = √(2mE)/ħ and makes the angle θ₀ with the surface. The surface lattice gives reciprocal-lattice rods perpendicular to the surface, at in-plane positions G = n₁a* + n₂b*. Elastic scattering requires the outgoing wavevector to lie on the Ewald sphere of radius k, so every rod that cuts the sphere gives one diffracted beam. The beam direction (kx, ky, kz) is projected onto the screen plane x = 1.5 k, giving the spot position (y, z) = (1.5 k·ky/kx, 1.5 k·kz/kx). The screen distance in the model (1.5 k) only rescales the pattern. The sample–screen distance, screen diameter and pixel count you enter set the tick labels: a spot at height y on the screen has in-plane wavevector k∥ ≈ k·y/(sample–screen distance), shown as 1/d = k∥/2π, and its pixel offset is y·(screen pixels/screen diameter). Spot size follows sin(θ₀)/sin(Θ/2), where Θ is the angle between the incident and diffracted beams; this is a qualitative weighting, not a calculated intensity.</p>
 </details>
 <details><summary>Limitations</summary>
-<p>This is a kinematic, qualitative tool. The rods are infinitely thin, so there is no streaking from finite domain size, roughness or film thickness. It has no Kikuchi lines, no inner-potential refraction and no dynamical effects, so spot intensities are only indicative. The wavelength is non-relativistic, which changes k by roughly 1% at 20 keV. The screen is flat and perpendicular to the in-plane beam direction.</p>
+<p>This is a kinematic, qualitative tool. The rods are infinitely thin, so there is no streaking from finite domain size, roughness or film thickness. It has no Kikuchi lines, no inner-potential refraction and no dynamical effects, so spot intensities are only indicative. The wavelength is non-relativistic, which changes k by roughly 1% at 20 keV. The screen is flat and perpendicular to the in-plane beam direction. The scale ticks use the small-angle relation (kx ≈ k) and measure pixels from the centre of the pattern (y = 0).</p>
 </details>
 <details><summary>Cite and contact</summary>
 <p>If you use this tool in a publication or presentation, please cite it, for example:</p>
@@ -75,7 +77,7 @@ footer{color:var(--muted);font-size:.8rem;margin:14px 2px 0}
 <script>
 (function(){
 var ME=9.1e-31, HB=1.05e-34, EV=1.6e-19, PI=Math.PI;
-var P={E:20,th:2,az:0,a:3.905,b:3.905,gam:90,N:8};
+var P={E:20,th:2,az:0,a:3.905,b:3.905,gam:90,N:8,S:0.095,D:0.055,Np:439,dinv:0.25,scale:true};
 var SL=[['E','Beam energy (keV)',5,50,0.5],['th','Incidence angle (°)',0.2,8,0.1],
         ['az','Azimuth (°)',0,360,1],['a','Lattice constant a (Å)',2,8,0.01],['b','Lattice constant b (Å)',2,8,0.01],
         ['gam','Angle γ between a and b (°)',30,150,0.5],['N','Max rod order',1,12,1]];
@@ -102,6 +104,16 @@ $('lat').value='square';
 function setVal(k,v){P[k]=v;$('i_'+k).value=v;$('o_'+k).textContent=v;}
 $('lat').addEventListener('change',function(e){var v=e.target.value;if(v==='custom')return;
   setVal('b',P.a);setVal('gam',v==='square'?90:120);schedule();});
+[['S','Sample–screen distance (m)'],['D','Screen diameter (m)'],['Np','Screen diameter (pixels)'],['dinv','Tick spacing 1/d (Å⁻¹)']].forEach(function(s){
+  var d=document.createElement('div');d.className='row';
+  d.innerHTML='<label><span>'+s[1]+'</span></label><input type="number" id="n_'+s[0]+'" min="0" step="any" value="'+P[s[0]]+'">';
+  ctl.appendChild(d);
+  d.querySelector('input').addEventListener('input',function(e){var v=parseFloat(e.target.value);if(v>0){P[s[0]]=v;schedule();}});
+});
+var sc=document.createElement('div');sc.className='row';
+sc.innerHTML='<label><span>Screen scale</span></label><label style="justify-content:flex-start;gap:6px;color:var(--fg)"><input type="checkbox" id="sc" checked> show 1/d and pixel ticks</label>';
+ctl.appendChild(sc);
+$('sc').addEventListener('change',function(e){P.scale=e.target.checked;schedule();});
 $('rv').addEventListener('click',function(){V.yaw=-0.6;V.pitch=0.45;schedule();});
 
 // ---- physics
@@ -140,7 +152,7 @@ function css(n){return getComputedStyle(document.documentElement).getPropertyVal
 function draw2(m){
   var f=fit(c2), W=f[0], H=f[1], g=f[2];
   g.fillStyle='#04100a';g.fillRect(0,0,W,H);
-  var mg=24, s=Math.min((W-2*mg)/(2*m.hy),(H-2*mg)/m.hz), ox=W/2, oy=H-mg;
+  var mg=24, oy=H-(P.scale?46:mg), s=Math.min((W-2*mg)/(2*m.hy),(oy-mg)/m.hz), ox=W/2;
   g.strokeStyle='rgba(120,200,140,.35)';g.beginPath();g.moveTo(0,oy);g.lineTo(W,oy);g.stroke();
   var base=Math.max(4,Math.min(W,H)/60);
   m.rods.forEach(function(r){
@@ -150,7 +162,25 @@ function draw2(m){
     gr.addColorStop(0.4,'rgba(90,230,130,.6)');gr.addColorStop(1,'rgba(40,160,80,0)');
     g.fillStyle=gr;g.beginPath();g.arc(x,y,rad*2,0,2*PI);g.fill();
   });
-  g.fillStyle='rgba(180,230,190,.6)';g.font='11px system-ui,sans-serif';
+  if(P.scale){
+    // x position of a tick: y_k = (u*2π/k)*sd, where u = 1/d = k_par/2π (Å⁻¹); pixels = (y_k/sd)*(S/D)*Np
+    var kin=m.kin, halfu=(m.hy/m.sd)*kin/(2*PI), st=P.dinv;
+    var pxu=(2*PI/kin)*(P.S/P.D)*P.Np, n=Math.min(200,Math.floor(halfu/st));
+    var every=Math.max(1,Math.ceil(46/((st*2*PI/kin)*m.sd*s)));
+    g.font='11px system-ui,sans-serif';g.textAlign='center';
+    for(var i=-n;i<=n;i++){
+      var u=i*st, x=ox+(u*2*PI/kin)*m.sd*s;
+      g.strokeStyle=i?'rgba(120,200,140,.18)':'rgba(120,200,140,.4)';
+      g.beginPath();g.moveTo(x,mg);g.lineTo(x,oy+6);g.stroke();
+      if(i%every===0){
+        g.fillStyle='rgba(180,230,190,.85)';g.fillText((Math.round(u*100)/100)+'/Å',x,oy+20);
+        g.fillStyle='rgba(150,200,160,.7)';g.fillText(Math.round(u*pxu)+' px',x,oy+34);
+      }
+    }
+    g.textAlign='left';g.fillStyle='rgba(150,200,160,.7)';
+    g.fillText('ticks: 1/d (Å⁻¹) and pixels from the pattern centre',8,14);
+  }
+  g.fillStyle='rgba(180,230,190,.6)';g.font='11px system-ui,sans-serif';g.textAlign='left';
   g.fillText('shadow edge',8,oy-5);
 }
 
@@ -198,7 +228,7 @@ var pending=false;
 function schedule(){if(!pending){pending=true;requestAnimationFrame(render);}}
 function render(){
   pending=false;M=compute();draw2(M);draw3(M);
-  $('info').textContent='k = '+M.kin.toFixed(1)+' Å⁻¹   ·   λ = '+(2*PI/M.kin).toFixed(4)+' Å   ·   '+M.rods.length+' rods cut the sphere';
+  $('info').textContent='k = '+M.kin.toFixed(1)+' Å⁻¹   ·   λ = '+(2*PI/M.kin).toFixed(4)+' Å   ·   '+M.rods.length+' rods cut the sphere   ·   0.1 Å⁻¹ ≈ '+Math.round(0.1*(2*PI/M.kin)*(P.S/P.D)*P.Np)+' px';
 }
 // drag to rotate
 var drag=null;
