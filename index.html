@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RHEED pattern simulator</title>
+<style>
+:root{--bg:#f7f7f5;--surface:#fff;--fg:#1d1d1b;--muted:#6b6b66;--accent:#2a6fdb;--border:#d9d9d4;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#161614;--surface:#20201e;--fg:#ecece8;--muted:#9a9a93;--accent:#6aa3ff;--border:#3a3a36;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161614;--surface:#20201e;--fg:#ecece8;--muted:#9a9a93;--accent:#6aa3ff;--border:#3a3a36;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:.9rem}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+#ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 18px}
+.row label{display:flex;justify-content:space-between;font-size:.85rem;color:var(--muted)}
+.row output{color:var(--fg);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+select,button{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:5px 8px}
+#info{margin:10px 0 0;font-size:.85rem;color:var(--muted)}
+.views{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:14px}
+.views h2{font-size:.95rem;margin:0 0 8px;display:flex;justify-content:space-between;align-items:center}
+canvas{width:100%;aspect-ratio:4/3;display:block;border-radius:8px;touch-action:none}
+.by{margin:0 0 14px;font-size:.85rem;color:var(--muted)}
+a{color:var(--accent)}
+.about{margin-top:14px}
+.about details{border-top:1px solid var(--border);padding:8px 0}
+.about details:first-of-type{border-top:0}
+.about summary{cursor:pointer;font-weight:600}
+.about p,.about li{font-size:.9rem}
+.about ul{margin:6px 0 0;padding-left:20px}
+.cite{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:.85rem}
+footer{color:var(--muted);font-size:.8rem;margin:14px 2px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>RHEED pattern simulator</h1>
+<p class="sub">Kinematic model: reciprocal-lattice rods cut by the Ewald sphere, projected onto a flat screen.</p>
+<p class="by">FerroThinFilms Lab · Department of Physics and Astronomy · University of Nebraska–Lincoln · <a href="https://xiaoshanxu.unl.edu/">xiaoshanxu.unl.edu</a></p>
+<div class="panel">
+  <div id="ctl"></div>
+  <p id="info"></p>
+</div>
+<div class="views">
+  <div class="panel"><h2>Screen pattern</h2><canvas id="c2"></canvas></div>
+  <div class="panel"><h2>3D Ewald construction (drag to rotate) <button id="rv" type="button">Reset view</button></h2><canvas id="c3"></canvas></div>
+</div>
+<section class="panel about">
+<details open><summary>How to use</summary>
+<ul>
+<li>Set the beam energy, incidence angle and azimuth, then define the surface lattice with a, b and γ, or pick a preset. Both views update as you move a slider.</li>
+<li>The left view is the pattern on a flat phosphor screen (horizontal axis y, vertical axis z). The brightest yellow spot is the specular (0,0) rod, and the horizontal line at the bottom is the shadow edge.</li>
+<li>The right view shows the Ewald construction in three dimensions: x is the in-plane direction of the beam, y is in-plane and perpendicular to it, and z is the surface normal. Drag to rotate.</li>
+<li>At azimuth 0 the real-space vector a lies along the beam, and b is at angle γ from a. The azimuth rotates the lattice about the surface normal.</li>
+</ul>
+</details>
+<details><summary>Model</summary>
+<p>The incident wavevector has magnitude k = √(2mE)/ħ and makes the angle θ₀ with the surface. The surface lattice gives reciprocal-lattice rods perpendicular to the surface, at in-plane positions G = n₁a* + n₂b*. Elastic scattering requires the outgoing wavevector to lie on the Ewald sphere of radius k, so every rod that cuts the sphere gives one diffracted beam. The beam direction (kx, ky, kz) is projected onto the screen plane x = 1.5 k, giving the spot position (y, z) = (1.5 k·ky/kx, 1.5 k·kz/kx). The screen distance only rescales the pattern. Spot size follows sin(θ₀)/sin(Θ/2), where Θ is the angle between the incident and diffracted beams; this is a qualitative weighting, not a calculated intensity.</p>
+</details>
+<details><summary>Limitations</summary>
+<p>This is a kinematic, qualitative tool. The rods are infinitely thin, so there is no streaking from finite domain size, roughness or film thickness. It has no Kikuchi lines, no inner-potential refraction and no dynamical effects, so spot intensities are only indicative. The wavelength is non-relativistic, which changes k by roughly 1% at 20 keV. The screen is flat and perpendicular to the in-plane beam direction.</p>
+</details>
+<details><summary>Cite and contact</summary>
+<p>If you use this tool in a publication or presentation, please cite it, for example:</p>
+<p class="cite">Xu, X., FerroThinFilms Lab, University of Nebraska–Lincoln. RHEED pattern simulator (2026). <span id="cu"></span></p>
+<p>Questions and bug reports: see the <a href="https://xiaoshanxu.unl.edu/">group website</a>.</p>
+</details>
+</section>
+<footer>© 2026 FerroThinFilms Lab, Department of Physics and Astronomy, University of Nebraska–Lincoln.</footer>
+</main>
+<script>
+(function(){
+var ME=9.1e-31, HB=1.05e-34, EV=1.6e-19, PI=Math.PI;
+var P={E:20,th:2,az:0,a:3.905,b:3.905,gam:90,N:8};
+var SL=[['E','Beam energy (keV)',5,50,0.5],['th','Incidence angle (°)',0.2,8,0.1],
+        ['az','Azimuth (°)',0,360,1],['a','Lattice constant a (Å)',2,8,0.01],['b','Lattice constant b (Å)',2,8,0.01],
+        ['gam','Angle γ between a and b (°)',30,150,0.5],['N','Max rod order',1,12,1]];
+var V={yaw:-0.6,pitch:0.45}, M=null;
+var $=function(id){return document.getElementById(id)};
+var c2=$('c2'), c3=$('c3');
+
+// ---- controls
+var ctl=$('ctl');
+SL.forEach(function(s){
+  var d=document.createElement('div');d.className='row';
+  d.innerHTML='<label><span>'+s[1]+'</span><output id="o_'+s[0]+'"></output></label>'+
+    '<input type="range" id="i_'+s[0]+'" min="'+s[2]+'" max="'+s[3]+'" step="'+s[4]+'" value="'+P[s[0]]+'">';
+  ctl.appendChild(d);
+  var inp=d.querySelector('input'), out=d.querySelector('output');
+  out.textContent=P[s[0]];
+  inp.addEventListener('input',function(){P[s[0]]=parseFloat(inp.value);out.textContent=inp.value;
+    if(s[0]==='a'||s[0]==='b'||s[0]==='gam')$('lat').value='custom';schedule();});
+});
+var dl=document.createElement('div');dl.className='row';
+dl.innerHTML='<label><span>Lattice preset</span></label><select id="lat"><option value="custom">Custom</option><option value="square">Square (b = a, γ = 90°)</option><option value="hex">Hexagonal (b = a, γ = 120°)</option></select>';
+ctl.appendChild(dl);
+$('lat').value='square';
+function setVal(k,v){P[k]=v;$('i_'+k).value=v;$('o_'+k).textContent=v;}
+$('lat').addEventListener('change',function(e){var v=e.target.value;if(v==='custom')return;
+  setVal('b',P.a);setVal('gam',v==='square'?90:120);schedule();});
+$('rv').addEventListener('click',function(){V.yaw=-0.6;V.pitch=0.45;schedule();});
+
+// ---- physics
+function compute(){
+  var kin=Math.sqrt(2*ME*P.E*1e3*EV)/HB/1e10, th0=P.th*PI/180, az=P.az*PI/180;
+  var c=Math.cos(az), s=Math.sin(az), ga=P.gam*PI/180;
+  // real space: a1 = a(1,0), a2 = b(cos γ, sin γ); reciprocal basis A*, B* with A*·a1 = 2π, A*·a2 = 0, etc.
+  var a2x=P.b*Math.cos(ga), a2y=P.b*Math.sin(ga), det=P.a*a2y;
+  var A=[2*PI*a2y/det,-2*PI*a2x/det], B=[0,2*PI*P.a/det];
+  var rot=function(v){return [v[0]*c+v[1]*s,-v[0]*s+v[1]*c]};
+  A=rot(A);B=rot(B);
+  var kx0=kin*Math.cos(th0), z0=-kin*Math.sin(th0), sd=1.5*kin, rods=[], N=P.N;
+  for(var na=-N;na<=N;na++)for(var nb=-N;nb<=N;nb++){
+    var kx=na*A[0]+nb*B[0]+kx0, ky=na*A[1]+nb*B[1], kp2=kx*kx+ky*ky;
+    if(kp2>=kin*kin||kx<=0)continue;
+    var kz=Math.sqrt(kin*kin-kp2);
+    var cs=Math.max(-1,Math.min(1,(kx*kx0+kz*z0)/(kin*kin))), Th=Math.acos(cs);
+    var w=Math.min(1.3,Math.sin(th0)/Math.max(Math.sin(Th/2),1e-3));
+    rods.push({kx:kx,ky:ky,kz:kz,y:ky*sd/kx,z:kz*sd/kx,w:w,spec:na===0&&nb===0});
+  }
+  var hy=0.04*sd, hz=0.04*sd;
+  rods.forEach(function(r){hy=Math.max(hy,Math.abs(r.y)*1.15);hz=Math.max(hz,r.z*1.15);});
+  return {kin:kin,th0:th0,kx0:kx0,z0:z0,sd:sd,rods:rods,hy:hy,hz:hz};
+}
+
+// ---- canvas helpers
+function fit(c){
+  var r=c.getBoundingClientRect(), d=window.devicePixelRatio||1;
+  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);
+  var g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);
+  return [r.width,r.height,g];
+}
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888';}
+
+// ---- 2D screen
+function draw2(m){
+  var f=fit(c2), W=f[0], H=f[1], g=f[2];
+  g.fillStyle='#04100a';g.fillRect(0,0,W,H);
+  var mg=24, s=Math.min((W-2*mg)/(2*m.hy),(H-2*mg)/m.hz), ox=W/2, oy=H-mg;
+  g.strokeStyle='rgba(120,200,140,.35)';g.beginPath();g.moveTo(0,oy);g.lineTo(W,oy);g.stroke();
+  var base=Math.max(4,Math.min(W,H)/60);
+  m.rods.forEach(function(r){
+    var x=ox+r.y*s, y=oy-r.z*s, rad=base*(0.6+0.8*Math.min(r.w,1));
+    var gr=g.createRadialGradient(x,y,0,x,y,rad*2);
+    gr.addColorStop(0,r.spec?'rgba(255,255,200,1)':'rgba(190,255,200,.95)');
+    gr.addColorStop(0.4,'rgba(90,230,130,.6)');gr.addColorStop(1,'rgba(40,160,80,0)');
+    g.fillStyle=gr;g.beginPath();g.arc(x,y,rad*2,0,2*PI);g.fill();
+  });
+  g.fillStyle='rgba(180,230,190,.6)';g.font='11px system-ui,sans-serif';
+  g.fillText('shadow edge',8,oy-5);
+}
+
+// ---- 3D view
+function draw3(m){
+  var f=fit(c3), W=f[0], H=f[1], g=f[2], k=m.kin;
+  var S=Math.min(W,H)/(2.5*k), cx=0.6*k, cz=0.35*k;
+  var cy=Math.cos(V.yaw), sy=Math.sin(V.yaw), cp=Math.cos(V.pitch), sp=Math.sin(V.pitch);
+  function pr(p){var x=p[0]-cx,y=p[1],z=p[2]-cz,x1=x*cy-y*sy,y1=x*sy+y*cy;
+    return [W/2+y1*S,H/2-(z*cp-x1*sp)*S];}
+  function ln(p,q,col,lw,dash){var a=pr(p),b=pr(q);g.strokeStyle=col;g.lineWidth=lw||1;g.setLineDash(dash||[]);
+    g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();g.setLineDash([]);}
+  g.fillStyle=css('--surface');g.fillRect(0,0,W,H);
+  // Ewald hemisphere wireframe
+  g.strokeStyle='rgba(70,130,220,.35)';g.lineWidth=1;
+  function poly(fn,n){g.beginPath();for(var i=0;i<=n;i++){var p=pr(fn(i/n));i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);}g.stroke();}
+  for(var j=0;j<12;j++){(function(ph){poly(function(t){var a=t*PI/2;return [k*Math.sin(a)*Math.cos(ph),k*Math.sin(a)*Math.sin(ph),k*Math.cos(a)];},24);})(j*PI/6);}
+  [0,PI/6,PI/3].forEach(function(a){poly(function(t){var p=t*2*PI;return [k*Math.cos(a)*Math.cos(p),k*Math.cos(a)*Math.sin(p),k*Math.sin(a)];},48);});
+  // screen plane
+  var q=[[m.sd,-m.hy,0],[m.sd,m.hy,0],[m.sd,m.hy,m.hz],[m.sd,-m.hy,m.hz]].map(pr);
+  g.fillStyle='rgba(60,200,110,.13)';g.strokeStyle='rgba(60,200,110,.6)';
+  g.beginPath();q.forEach(function(p,i){i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);});g.closePath();g.fill();g.stroke();
+  // incident beam
+  ln([0,0,0],[m.kx0,0,m.z0],css('--accent'),1.5,[5,4]);
+  // rods, beams, spots
+  m.rods.forEach(function(r){
+    ln([r.kx,r.ky,m.z0],[r.kx,r.ky,r.kz],'rgba(150,150,140,.7)',1);
+    ln([0,0,0],[m.sd,r.y,r.z],'rgba(230,170,40,.35)',1);
+  });
+  m.rods.forEach(function(r){
+    var a=pr([r.kx,r.ky,m.z0]);g.fillStyle='#2fa84f';g.fillRect(a[0]-2,a[1]-2,4,4);
+    var b=pr([r.kx,r.ky,r.kz]);g.strokeStyle='#e0b400';g.lineWidth=1.5;
+    g.beginPath();g.moveTo(b[0]-3,b[1]-3);g.lineTo(b[0]+3,b[1]+3);g.moveTo(b[0]+3,b[1]-3);g.lineTo(b[0]-3,b[1]+3);g.stroke();
+    var s=pr([m.sd,r.y,r.z]);g.fillStyle=r.spec?'#ffd400':'#e03a2f';
+    g.beginPath();g.arc(s[0],s[1],2+4*Math.min(r.w,1),0,2*PI);g.fill();
+  });
+  // axes
+  var L=0.3*k, ax=[[[L,0,0],'x','#e03a2f'],[[0,L,0],'y','#2fa84f'],[[0,0,L],'z','#2a6fdb']];
+  g.font='12px system-ui,sans-serif';
+  ax.forEach(function(a){ln([0,0,0],a[0],a[2],2);var p=pr(a[0].map(function(v){return v*1.12;}));g.fillStyle=a[2];g.fillText(a[1],p[0]-3,p[1]+4);});
+}
+
+// ---- render
+var pending=false;
+function schedule(){if(!pending){pending=true;requestAnimationFrame(render);}}
+function render(){
+  pending=false;M=compute();draw2(M);draw3(M);
+  $('info').textContent='k = '+M.kin.toFixed(1)+' Å⁻¹   ·   λ = '+(2*PI/M.kin).toFixed(4)+' Å   ·   '+M.rods.length+' rods cut the sphere';
+}
+// drag to rotate
+var drag=null;
+c3.addEventListener('pointerdown',function(e){drag=[e.clientX,e.clientY];c3.setPointerCapture(e.pointerId);});
+c3.addEventListener('pointermove',function(e){
+  if(!drag)return;
+  V.yaw+=(e.clientX-drag[0])*0.01;V.pitch=Math.max(-1.4,Math.min(1.4,V.pitch+(e.clientY-drag[1])*0.01));
+  drag=[e.clientX,e.clientY];schedule();
+});
+c3.addEventListener('pointerup',function(){drag=null;});
+c3.addEventListener('pointercancel',function(){drag=null;});
+window.addEventListener('resize',schedule);
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',schedule);
+var cu=$('cu');if(cu)cu.textContent=location.href.split('#')[0];
+render();
+})();
+</script>
+</body>
+</html>
