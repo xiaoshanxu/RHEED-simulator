@@ -72,7 +72,8 @@ footer{color:var(--muted);font-size:.8rem;margin:14px 2px 0}
 <p>Questions and bug reports: see the <a href="https://xiaoshanxu.unl.edu/">group website</a>.</p>
 </details>
 </section>
-<footer>© 2026 FerroThinFilms Lab, Department of Physics and Astronomy, University of Nebraska–Lincoln. Released under the MIT License.</footer>
+<footer>© 2026 FerroThinFilms Lab, Department of Physics and Astronomy, University of Nebraska–Lincoln. Released under the MIT License. Visit counts use GoatCounter, which does not track personal data.</footer>
+<div id="stats" style="margin-top:10px"></div>
 </main>
 <script>
 (function(){
@@ -251,6 +252,17 @@ if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventL
 var cu=$('cu');if(cu)cu.textContent=location.href.split('#')[0];
 render();
 })();
+</script>
+<script data-goatcounter="https://ferrothinfilm-rheed.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+<script>
+var gcTimer=setInterval(function(){
+  if(window.goatcounter&&window.goatcounter.visit_count){
+    clearInterval(gcTimer);
+    window.goatcounter.visit_count({append:'#stats',no_branding:true,
+      style:'div{background-color:transparent;border-color:#8886;color:#888}'});
+  }
+},100);
 </script>
 </body>
 </html>
